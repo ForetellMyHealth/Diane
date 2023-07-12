@@ -140,12 +140,6 @@ def ML_model_performance(x, model, y, sample):
 
 num_of_gene = 17
 
-# deg = pd.read_csv('/home/anh1702/ULMS/GAPDH_scale_trainNDFGR_zerosum_MSE_cancer_normal_ratio_symbol.csv')[0:num_of_gene].id
-
-# tr_data = pd.read_csv('/home/anh1702/ULMS/GAPDH_scale_trainNDFGR_zerosum_TCGAtrain.csv')
-# ts_data = pd.read_csv('/home/anh1702/ULMS/GAPDH_scale_trainNDFGR_zerosum_TCGAtest.csv')
-# theragen_data = pd.read_csv('/home/anh1702/ULMS/GAPDH_scale_trainNDFGR_zerosum_theragen.csv')
-
 deg = pd.read_csv('/nfs-data/ULMS/Diane/data_revised/GAPDH_scale_trainNDFGR_zerosum_MSE_ratio.csv')[0:num_of_gene].gene_name
 
 tr_data = pd.read_csv('/nfs-data/ULMS/Diane/data_revised/GAPDH_scale_trainNDFGR_zerosum_TCGAtrain.csv')
