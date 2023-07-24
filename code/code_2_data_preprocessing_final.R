@@ -1,12 +1,3 @@
-# 2020/12/23 Sarah Kim
-# sample mean 0 normalize method validation
-# 샘플 평균 0으로 정규화해서 유전자 뽑은 방법 찾기
-# 2020/12/31 Sarah Kim
-# z-scale 말고 GAPDH scale 확인
-# 2021/01/28 smpark
-# EIF4H scale 확인
-
-
 # lbirary import
 library(readr)
 library(dplyr)
@@ -37,12 +28,6 @@ inter_gene_data <- data[data$sample %in% inter_gene$sample,]
 rownames(inter_gene_data) <- NULL
 uterus_data <- cbind(sample=inter_gene_data[1], inter_gene_data[,colnames(inter_gene_data) %in% Uterus_list$sample])
 
-
-# # 0. z-scale
-# uterus_data <- cbind(sample=uterus_data[1], uterus_data[-1] %>% apply(2, scale))
-# 
-# uterus_data_T <- uterus_data %>% column_to_rownames('sample') %>% t() %>% as.data.frame()  %>% rownames_to_column('sample')
-
 # 0. GAPDH scale
 uterus_data_T <- uterus_data %>% column_to_rownames('sample') %>% t() %>% as.data.frame()  %>% rownames_to_column('sample')
 'ENSG00000111640' %in% colnames(uterus_data_T)
@@ -53,21 +38,6 @@ uterus_data_T <- cbind(sample=uterus_data_T[,c(1)],
                        uterus_data_T[,-c(1)] %>% apply(2, function(x){x - gapdh_value}) %>% as.data.frame())
 head(uterus_data_T['ENSG00000111640']) # scale 후
 summary(uterus_data_T[1:5, 1:5])
-
-# # 0. EIF4H scale
-# uterus_data_T <- uterus_data %>% column_to_rownames('sample') %>% t() %>% as.data.frame()  %>% rownames_to_column('sample')
-# 'ENSG00000106682' %in% colnames(uterus_data_T)
-# eif4h_value <- uterus_data_T['ENSG00000106682']$ENSG00000106682
-# 
-# head(uterus_data_T['ENSG00000106682']) # scale 전
-# uterus_data_T <- cbind(sample=uterus_data_T[,c(1)],
-#                        uterus_data_T[,-c(1)] %>% apply(2, function(x){x - eif4h_value}) %>% as.data.frame())
-# head(uterus_data_T['ENSG00000106682']) # scale 후
-# summary(uterus_data_T[1:5, 1:5])
-
-
-# write.csv(uterus_data_T, '/home/srkim/ULMS/sample_mean_0_normalize/data/GAPDH_scale_inter_gene_uterus_data.csv', row.names=FALSE)
-
 
 uterus_data_T <- read.csv('/nfs-data/ULMS/Diane/data/GAPDH_scale_inter_gene_uterus_data.csv', header=TRUE, stringsAsFactors=FALSE)
 
@@ -93,12 +63,8 @@ high_rank_gene <- avg_exp[1:as.integer(nrow(avg_exp)*0.3),'gene']   # 6795 genes
 high_rank_uterus_data <- cbind(tr_uterus_data[1:2], tr_uterus_data[high_rank_gene])
 high_rank_test_data <- cbind(ts_uterus_data[1:2], ts_uterus_data[high_rank_gene])
 
-# feature selection 1.2. remove race difference
+# 1.2 feature selection 
 theragen <- readRDS('/nfs-data/ULMS/ntp/data/theragen_log2_scale_clinical_data.rds')
-
-# # z scale
-# scaled_theragen <- cbind(sample=theragen[1], theragen[inter_gene$sample] %>% apply(1, scale) %>% t() %>% as.data.frame())
-# colnames(scaled_theragen)[-1] <- colnames(theragen[inter_gene$sample])
 
 # GAPDH scale
 'ENSG00000111640' %in% colnames(theragen)
@@ -110,32 +76,24 @@ scaled_theragen <- cbind(sample=theragen[,c(1)],
 head(scaled_theragen['ENSG00000111640']) # scale 후
 summary(scaled_theragen[1:5, 1:5])
 
-# # EIF4H scale
-# 'ENSG00000106682' %in% colnames(theragen)
-# eif4h_value <- theragen['ENSG00000106682']$ENSG00000106682
-# 
-# head(theragen['ENSG00000106682']) # scale 전
-# scaled_theragen <- cbind(sample=theragen[,c(1)],
-#                          theragen[,-c(1)] %>% apply(2, function(x){x - eif4h_value}) %>% as.data.frame())
-# head(scaled_theragen['ENSG00000106682']) # scale 후
-# summary(scaled_theragen[1:5, 1:5])
+# train set, 1st test set에서 LM 필터링
+theragen_label <- read.csv('/nfs-data/ULMS/ntp/data/theragen_sample_with_label.csv', header=TRUE, stringsAsFactors=FALSE)
+scaled_theragen_1st_ctl <- theragen_label[1:18,] %>% filter(state == 0)
+scaled_theragen_1st <- scaled_theragen[scaled_theragen$sample %in% scaled_theragen_1st_ctl$sample,]
+high_rank_uterus_data_ctl <- high_rank_uterus_data %>% filter(state == 0)
 
-
-#var_ensg <- c()
 sub_ensg <- c()
 
-for (ensg in colnames(high_rank_uterus_data)[-c(1:2)]) {
+for (ensg in colnames(high_rank_uterus_data_ctl)[-c(1:2)]) {
   
   if (ensg=='ENSG00000111640') {
-    #if (ensg=='ENSG00000106682') {
     next
   }
   
-  var_result <- var.test(high_rank_uterus_data[,ensg], scaled_theragen[,ensg])
+  var_result <- var.test(high_rank_uterus_data_ctl[,ensg], scaled_theragen_1st[,ensg])
   
   if (var_result$p.value > 0.05) {
-    #var_ensg <- c(var_ensg, ensg)
-    t_result <- t.test(high_rank_uterus_data[,ensg], scaled_theragen[,ensg], var.equal=TRUE)
+    t_result <- t.test(high_rank_uterus_data_ctl[,ensg], scaled_theragen_1st[,ensg], var.equal=TRUE)
     
     if (t_result$p.value > 0.05) {
       sub_ensg <- c(sub_ensg, ensg)
@@ -143,6 +101,7 @@ for (ensg in colnames(high_rank_uterus_data)[-c(1:2)]) {
     }
   }
 }
+
 
 # 인종차 제거 유전자 = sub_ensg # 1314 genes
 
@@ -193,24 +152,7 @@ gene_20[theta$gene_name[1:20],]
 
 
 
-############ RF model #########################
-# AUC & ROC 그리는 함수
-plot.roc.curve <- function(model, data, actual, title.text){
-  predict_prob <- predict(model, newdata = data,type = 'prob')
-  predictions <- prediction(predict_prob[,2], actual)
-  
-  perf <- performance(predictions, "tpr", "fpr")
-  plot(perf,col="black",lty=1, lwd=2,
-       main=title.text, cex.main=0.6, cex.lab=0.8,xaxs="i", yaxs="i")
-  abline(0,1, col="red")
-  auc <- performance(predictions,"auc")
-  auc <- unlist(slot(auc, "y.values"))
-  #auc <- round(auc,2)
-  legend(0.4,0.4,legend=c(paste0("AUC: ",auc)),cex=0.6,bty = "n",box.col = "white")
-}
-
-
-
+############ Visualization #########################
 ######### 데이터 준비 ##############
 theta <- read.csv('/nfs-data/ULMS/Diane/data/GAPDH_scale_trainNDFGR_zerosum_MSE_cancer_normal_ratio_symbol.csv', stringsAsFactors = FALSE, header = TRUE)
 tr_data <- read.csv('/nfs-data/ULMS/Diane/data/GAPDH_scale_trainNDFGR_zerosum_TCGAtrain.csv', stringsAsFactors = FALSE, header = TRUE)
@@ -232,55 +174,6 @@ theragen_extract2 <- theragen_data[-c(1:18), c('sample', 'state', deg)]
 theragen_extract1$state <- as.factor(theragen_extract1$state)
 theragen_extract2$state <- as.factor(theragen_extract2$state)
 
-# randomforest model 학습
-set.seed(123)
-rf.fit = randomForest(state ~ .
-                      , data=data.train[-1], mtry = floor(sqrt(10)), ntree = 500, importance = T)
-
-# 결과 확인
-# train data 결과
-confusionMatrix(
-  predict(rf.fit, newdata = data.train),
-  data.train$state
-)
-
-plot.roc.curve( model = rf.fit,
-                data = data.train,
-                actual = data.train$state,
-                title.text = "Train data ROC Curve")
-
-# validation data 결과
-confusionMatrix(
-  predict(rf.fit, newdata = data.test),
-  data.test$state
-)
-
-plot.roc.curve( model = rf.fit,
-                data = data.test,
-                actual = data.test$state,
-                title.text = "Validation data ROC Curve")
-
-# test 1st data 결과
-confusionMatrix(
-  predict(rf.fit, newdata = theragen_extract1),
-  theragen_extract1$state
-)
-
-plot.roc.curve( model = rf.fit,
-                data = theragen_extract1,
-                actual = theragen_extract1$state,
-                title.text = "Test data ROC Curve")
-
-# test 2nd data 결과
-confusionMatrix(
-  predict(rf.fit, newdata = theragen_extract2),
-  theragen_extract2$state
-)
-
-plot.roc.curve( model = rf.fit,
-                data = theragen_extract2,
-                actual = theragen_extract2$state,
-                title.text = "Test data ROC Curve")
 
 #### combine data
 gene_name <- gene_data[which(gene_data$id %in% deg),c(1,2)] %>% tibble::column_to_rownames('id')
@@ -331,8 +224,6 @@ Heatmap(gene,
 # dev.off()
 
 # gene graph 그리기
-# com_data <- rbind(com_data_public, com_data_test)
-# colnames(com_data)[2] <- "Label"
 com_data$data_set <- as.factor(com_data$data_set)
 com_data$Label <- as.vector(com_data$Label)
 com_data$type <- ifelse(com_data$data_set == "Training" | com_data$data_set == "Validation",
@@ -340,8 +231,6 @@ com_data$type <- ifelse(com_data$data_set == "Training" | com_data$data_set == "
                         ifelse(com_data$Label == 'Leiomyoma','theragen_normal','theragen_cancer'))
 data <- com_data
 gene_name <- gene_data[which(gene_data$id %in% colnames(data)),c(1,2)] %>% tibble::column_to_rownames('id')
-# colnames(data)[-c(1,2,23,24)] <- gene_name[colnames(data)[-c(1,2,23,24)],]
-# data_gather <- data %>% tidyr::gather(gene_name,gene_value,-sample,-Label, -data_set,-type)
 
 
 gene_data_gather1 <- data %>% filter(type == 'Leiomyosarcoma')%>% tidyr::gather(gene_name,gene_value,-sample,-Label, -data_set,-type)
@@ -352,8 +241,6 @@ gene_data_gather4 <- data %>% filter(type == 'theragen_normal')%>% tidyr::gather
 
 # train, validation, theragen 1st, 2nd 나눠서 그리기
 # training
-#pdf("/home/srkim/ULMS/sample_mean_0_normalize/result/GAPDH_remove_race_mean0_MSE_line_graph_training_set.pdf")
-#png("/home/srkim/ULMS/sample_mean_0_normalize/result/GAPDH_remove_race_mean0_MSE_line_graph_training_set_0311.png")
 gene_data_gather1_train <- gene_data_gather1 %>% filter(data_set =='Training')
 gene_data_gather2_train <- gene_data_gather2 %>% filter(data_set =='Training')
 
@@ -380,8 +267,6 @@ line_train <- ggplot(gene_data_gather2_train)+
 #dev.off()
 
 # validation
-#pdf("/home/srkim/ULMS/sample_mean_0_normalize/result/GAPDH_remove_race_mean0_MSE_line_graph_validation_set.pdf")
-#png("/home/srkim/ULMS/sample_mean_0_normalize/result/GAPDH_remove_race_mean0_MSE_line_graph_validation_set_0311.png")
 gene_data_gather1_test <- gene_data_gather1 %>% filter(data_set =='Validation')
 gene_data_gather2_test <- gene_data_gather2 %>% filter(data_set =='Validation')
 
@@ -408,8 +293,6 @@ line_vali <- ggplot(gene_data_gather2_test)+
 #dev.off()
 
 # 1st
-#pdf("/home/srkim/ULMS/ntp/result/line_graph_Theragen_1st.pdf")
-#png("/home/srkim/ULMS/sample_mean_0_normalize/result/GAPDH_remove_race_mean0_MSE_line_graph_Theragen_1st_wrong_0318.png")
 gene_data_gather3_1st <- gene_data_gather3 %>% filter(data_set =="Test - 1st")
 gene_data_gather4_1st <- gene_data_gather4 %>% filter(data_set =="Test - 1st")
 
@@ -443,8 +326,6 @@ line_1st_test <- ggplot(gene_data_gather3_1st)+
 #dev.off()
 
 # 2nd
-#pdf("/home/srkim/ULMS/sample_mean_0_normalize/result/GAPDH_remove_race_mean0_MSE_line_graph_Theragen_2nd.pdf")
-#png("/home/srkim/ULMS/sample_mean_0_normalize/result/GAPDH_remove_race_mean0_MSE_line_graph_Theragen_2nd_0311.png")
 gene_data_gather3_2nd <- gene_data_gather3 %>% filter(data_set =="Test - 2nd")
 gene_data_gather4_2nd <- gene_data_gather4 %>% filter(data_set =="Test - 2nd")
 
