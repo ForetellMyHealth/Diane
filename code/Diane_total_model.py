@@ -183,7 +183,7 @@ dnn_tuner = MyTuner(
     max_trials=500,
     seed=7777,
     executions_per_trial=1,
-    directory='../model_revised/',
+    directory='../model/',
     project_name='DNN_deg'+str(num_of_gene))
 
 
@@ -226,7 +226,7 @@ gb_tuner = tuners.Sklearn(
         seed=7777),
     hypermodel=gb_fn,
     scoring=metrics.make_scorer(metrics.accuracy_score),
-    directory='../model_revised/',
+    directory='../model/',
     project_name='GB_deg'+str(num_of_gene))
 
 gb_tuner.search(train_x, train_y)
@@ -265,7 +265,7 @@ rf_tuner = tuners.Sklearn(
         seed=7777),
     hypermodel=rf_fn,
     scoring=metrics.make_scorer(metrics.accuracy_score),
-    directory='../model_revised/',
+    directory='../model/',
     project_name='RF_deg'+str(num_of_gene))
 
 
@@ -304,7 +304,7 @@ svm_tuner = tuners.Sklearn(
         seed=7777),
     hypermodel=svm_fn,
     scoring=metrics.make_scorer(metrics.accuracy_score),
-    directory='../model_revised/',
+    directory='../model/',
     project_name='SVM_deg'+str(num_of_gene))
 
 svm_tuner.search(train_x, train_y)
