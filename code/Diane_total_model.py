@@ -111,7 +111,7 @@ def ML_model_performance(x, model, y, sample):
 
 num_of_gene = 17
 
-deg = pd.read_csv('../data_revised/GAPDH_scale_trainNDFGR_zerosum_MSE_ratio_symbol.csv')[0:num_of_gene].gene_name
+deg = pd.read_csv('../data_revised/GAPDH_scale_trainNDFGR_zerosum_MSE_ratio_symbol.csv')[0:num_of_gene]['id']
 
 tr_data = pd.read_csv('../data_revised/GAPDH_scale_trainNDFGR_zerosum_TCGAtrain.csv')
 ts_data = pd.read_csv('../data_revised/GAPDH_scale_trainNDFGR_zerosum_TCGAtest.csv')
