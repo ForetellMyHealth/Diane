@@ -6,16 +6,16 @@ library(tibble)
 
 ##### Data loading #####
 # Public data
-data <- read_delim("../data/TcgaTargetGtex_rsem_gene_fpkm", "\t", escape_double = FALSE, trim_ws = TRUE)
-phenotype <- read.csv('../data/TcgaTargetGTEX_phenotype.csv',header = TRUE)
-ULMS_list <- read.csv("../data/TcgaTargetGtex_ulms_list.csv",header = TRUE)
-Uterus_list <- read.csv("../data/TcgaTargetGTEX_Uterus_list.csv",header = TRUE)
-gene_data <- read_delim('/nfs-data/ULMS/data/gencode.v23.annotation.gene.txt', '\t')
-inter_gene <- read.csv('../data/TCGA_theragen_inter_gene.csv', header=TRUE, stringsAsFactors=FALSE)
+data <- read_delim("../ref/TcgaTargetGtex_rsem_gene_fpkm", "\t", escape_double = FALSE, trim_ws = TRUE)
+phenotype <- read.csv('../ref/TcgaTargetGTEX_phenotype.csv',header = TRUE)
+ULMS_list <- read.csv("../ref/TcgaTargetGtex_ulms_list.csv",header = TRUE)
+Uterus_list <- read.csv("../ref/TcgaTargetGTEX_Uterus_list.csv",header = TRUE)
+gene_data <- read_delim('../ref/gencode.v23.annotation.gene.txt', '\t')
+inter_gene <- read.csv('../ref/TCGA_theragen_inter_gene.csv', header=TRUE, stringsAsFactors=FALSE)
 
 # Clinical sample data
-clinical <- readRDS('../data/theragen_log2_scale_clinical_data.rds')
-clinical_label <- read.csv('../data/theragen_sample_with_label.csv', header=TRUE, stringsAsFactors=FALSE)
+clinical <- readRDS('../ref/theragen_log2_scale_clinical_data.rds')
+clinical_label <- read.csv('../ref/theragen_sample_with_label.csv', header=TRUE, stringsAsFactors=FALSE)
 test_sample_1st <- clinical_label[1:18,]
 test_sample_2nd <- clinical_label[19:35,]
 
@@ -44,8 +44,8 @@ scaled_clinical <- cbind(sample=clinical[,c(1)],
 
 
 ##### Data splitting #####
-tr_sample <- read.csv('../data/TCGA_train_samples_2.csv', header=TRUE, stringsAsFactors=FALSE)
-ts_sample <- read.csv('../data/TCGA_test_samples_2.csv', header=TRUE, stringsAsFactors=FALSE)
+tr_sample <- read.csv('../ref/TCGA_train_samples_2.csv', header=TRUE, stringsAsFactors=FALSE)
+ts_sample <- read.csv('../ref/TCGA_test_samples_2.csv', header=TRUE, stringsAsFactors=FALSE)
 
 tr_uterus_data <- tr_sample %>% inner_join(uterus_data_T_scaled, by='sample')
 ts_uterus_data <- ts_sample %>% inner_join(uterus_data_T_scaled, by='sample')
